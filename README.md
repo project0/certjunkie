@@ -22,7 +22,7 @@ As it is intended to be used within an private and closed context, optional auth
 For combatible dns provdider look at https://github.com/xenolf/lego/tree/master/providers/dns
 
 ### Docker
-[Image DockerHub](https://hub.docker.com/project0de/certjunkie)
+[Image DockerHub](https://hub.docker.com/r/project0de/certjunkie)
 
 ```bash
 docker run -ti -p 80:80 -p 53:53 -p 53:53/udp \
