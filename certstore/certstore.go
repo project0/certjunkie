@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/docker/libkv/store"
 	"github.com/xenolf/lego/acme"
@@ -130,16 +129,8 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 		return nil, err
 	}
 	if cert != nil {
-		// check if its still valid..
-		certInfo, err := cert.parseCert()
-		if err == nil {
-			validEndDay := time.Now().Add(time.Hour * time.Duration(24*request.ValidDays))
-			if certInfo.NotAfter.After(validEndDay) {
-				return cert, nil
-			}
-			log.Printf("Certificate is valid until %s, start renew", certInfo.NotAfter)
-			// cert is expired
-		}
+		// validation is already checked
+		return cert, nil
 	}
 
 	// continue with creating a new one
@@ -209,6 +200,10 @@ func (c *CertStore) getStoredCertByCN(r *CertRequest) (*CertificateResource, err
 	if err := json.Unmarshal(pair.Value, cert); err != nil {
 		return nil, err
 	}
+	ok, err := r.matchCertificate(cert)
+	if !ok || err != nil {
+		return nil, err
+	}
 	return cert, nil
 }
 
@@ -218,29 +213,19 @@ func (c *CertStore) findStoredCert(r *CertRequest) (*CertificateResource, error)
 		return nil, err
 	}
 
-	domains := r.domains()
 	for _, pair := range list {
-
 		cert := new(CertificateResource)
 		if err := json.Unmarshal(pair.Value, cert); err != nil {
 			log.Printf("Could not decode json from %s", pair.Key)
 			continue
 		}
 
-		certInfo, err := cert.parseCert()
+		ok, err := r.matchCertificate(cert)
 		if err != nil {
-			return nil, err
+			log.Print(err)
+			continue
 		}
-
-		matches := 0
-		for _, host := range domains {
-			if certInfo.VerifyHostname(host) == nil {
-				matches += 1
-			}
-		}
-
-		if len(domains) == matches {
-			// seems to be the perfect cert
+		if ok {
 			return cert, nil
 		}
 

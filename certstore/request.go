@@ -1,6 +1,10 @@
 package certstore
 
-import "strings"
+import (
+	"log"
+	"strings"
+	"time"
+)
 
 // CertRequest contains information about the requested cert
 type CertRequest struct {
@@ -17,6 +21,35 @@ func (r *CertRequest) pathCert() string {
 func (r *CertRequest) domains() []string {
 	// First element in the list will get the common name
 	return removeDuplicates(append([]string{r.Domain}, r.San...))
+}
+
+func (r *CertRequest) matchCertificate(cert *CertificateResource) (bool, error) {
+	// First element in the list will get the common name
+
+	certInfo, err := cert.parseCert()
+	if err != nil {
+		return false, err
+	}
+
+	matches := 0
+	for _, host := range r.domains() {
+		if certInfo.VerifyHostname(host) == nil {
+			matches += 1
+		}
+	}
+
+	if len(r.domains()) == matches {
+		// seems to be the perfect cert
+		validEndDay := time.Now().Add(time.Hour * time.Duration(24*r.ValidDays))
+		if certInfo.NotAfter.After(validEndDay) {
+			return true, nil
+		}
+		// cert is expired
+		log.Printf("certificate is valid until %s but needs to be valid for %i days", certInfo.NotAfter, r.ValidDays)
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func removeDuplicates(elements []string) []string {
