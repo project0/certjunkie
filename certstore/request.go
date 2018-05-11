@@ -45,8 +45,8 @@ func (r *CertRequest) matchCertificate(cert *CertificateResource) (bool, error) 
 			return true, nil
 		}
 		// cert is expired
-		log.Printf("certificate is valid until %s but needs to be valid for %i days", certInfo.NotAfter, r.ValidDays)
-		return true, nil
+		log.Printf("certificate is valid until %s but needs to be valid for %d days", certInfo.NotAfter, r.ValidDays)
+		return false, nil
 	}
 
 	return false, nil
