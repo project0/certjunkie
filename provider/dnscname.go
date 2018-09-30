@@ -11,6 +11,8 @@ import (
 	"github.com/xenolf/lego/acme"
 )
 
+const Name = "dnscname"
+
 var ChallengeLocker = make(map[string]*sync.Mutex)
 var ChallengeRecord = make(map[string]*dns.TXT)
 
