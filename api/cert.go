@@ -71,7 +71,7 @@ func (a *apiCert) getCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(cert.Certificate)
+	w.Write(cert.GetNoBundleCertificate())
 }
 
 func (a *apiCert) getCA(w http.ResponseWriter, r *http.Request) {
@@ -98,5 +98,5 @@ func (a *apiCert) getBundle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(append(cert.Certificate, cert.IssuerCertificate...))
+	w.Write(append(cert.GetNoBundleCertificate(), cert.IssuerCertificate...))
 }

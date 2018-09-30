@@ -15,3 +15,5 @@ COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 COPY --from=builder /go/src/github.com/project0/certjunkie/certjunkie .
 
 ENTRYPOINT ["./certjunkie"]
+
+CMD [ "server" ]
