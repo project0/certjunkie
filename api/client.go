@@ -61,12 +61,12 @@ func (c *Client) Get(domain string, san []string, onlyCN bool, valid int) (cert 
 
 // WriteCert writes the cert to file
 func (c *Client) WriteCert(cert *certstore.CertificateResource, filepath string) (err error) {
-	return c.writeFile(cert.Certificate, filepath)
+	return c.writeFile(cert.GetNoBundleCertificate(), filepath)
 }
 
 // WriteBundle writes the cert + ca to file
 func (c *Client) WriteBundle(cert *certstore.CertificateResource, filepath string) (err error) {
-	return c.writeFile(append(cert.Certificate, cert.IssuerCertificate...), filepath)
+	return c.writeFile(append(cert.GetNoBundleCertificate(), cert.IssuerCertificate...), filepath)
 }
 
 // WriteKey writes the privte key to file

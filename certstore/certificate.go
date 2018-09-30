@@ -17,3 +17,9 @@ func (c *CertificateResource) parseCert() (*x509.Certificate, error) {
 	block, _ := pem.Decode(c.Certificate)
 	return x509.ParseCertificate(block.Bytes)
 }
+
+// GetNoBundleCertificate ensures to return the cert without ca
+func (c *CertificateResource) GetNoBundleCertificate() []byte {
+	block, _ := pem.Decode(c.Certificate)
+	return pem.EncodeToMemory(block)
+}
