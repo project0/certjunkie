@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -48,6 +49,12 @@ func (c *Client) Get(domain string, san []string, onlyCN bool, valid int) (cert 
 		return
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Failed to retrieve cert: %s", string(respBody))
+	}
+
+	cert = &certstore.CertificateResource{}
 	err = json.NewDecoder(resp.Body).Decode(cert)
 	return
 }
