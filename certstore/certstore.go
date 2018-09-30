@@ -6,7 +6,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"log"
 	"sync"
 
@@ -69,7 +68,7 @@ func NewCertStore(acmeDirectory string, email string, challengeProvider *acme.Ch
 	// set our own dns provider
 	cs.client.SetChallengeProvider(acme.DNS01, *challengeProvider)
 	// we support only dns challenges
-	cs.client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
+	cs.client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSALPN01})
 
 	return cs, nil
 }
@@ -138,7 +137,7 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 	// check user first....
 	if c.user.Registration == nil {
 		log.Println("New Registration of user", c.client)
-		reg, err := c.client.Register()
+		reg, err := c.client.Register(true)
 		if err != nil {
 			log.Print(err)
 		}
@@ -148,28 +147,10 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 			log.Printf("could not save user registration %v", err)
 		}
 	}
-	err = c.client.AgreeToTOS()
-	if err != nil {
-		// Let's Encrypt Subscriber Agreement renew ?
-		reg, err := c.client.QueryRegistration()
-		if err != nil {
-			return nil, err
-		}
-		// save this
-		c.user.Registration = reg
-		if c.SaveUser(c.user) != nil {
-			// just log and continue, its not as critical we stop getting our cert
-			log.Printf("could not save user registration")
-		}
-		err = c.client.AgreeToTOS()
-		if err != nil {
-			return nil, fmt.Errorf("error sending ACME agreement to TOS: %+v: %s", c.user, err.Error())
-		}
-	}
 
-	acmeCerts, errors := c.client.ObtainCertificate(request.domains(), false, nil, false)
-	if len(errors) > 0 {
-		return nil, fmt.Errorf("%v", errors)
+	acmeCerts, err := c.client.ObtainCertificate(request.domains(), false, nil, false)
+	if err != nil {
+		return nil, err
 	}
 
 	// create our own cert resource

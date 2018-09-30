@@ -18,8 +18,8 @@ import (
 	"github.com/project0/certjunkie/provider"
 )
 
-const ACME_STAGING = "https://acme-staging.api.letsencrypt.org/directory"
-const ACME = "https://acme-v01.api.letsencrypt.org/directory"
+const ACME_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
+const ACME = "https://acme-v02.api.letsencrypt.org/directory"
 
 var certStore *certstore.CertStore
 
