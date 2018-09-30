@@ -222,13 +222,13 @@ func main() {
 					}
 				}
 				if fileKey != "" {
-					err := client.WriteCA(cert, fileKey)
+					err := client.WriteKey(cert, fileKey)
 					if err != nil {
 						return err
 					}
 				}
 				if fileBundle != "" {
-					err := client.WriteCA(cert, fileBundle)
+					err := client.WriteBundle(cert, fileBundle)
 					if err != nil {
 						return err
 					}
