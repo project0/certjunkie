@@ -10,13 +10,14 @@ import (
 
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
+	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v4/providers/dns"
+
 	"github.com/project0/certjunkie/api"
 	"github.com/project0/certjunkie/certstore"
 	"github.com/project0/certjunkie/certstore/libkv/local"
 	"github.com/project0/certjunkie/provider"
 	"github.com/urfave/cli"
-	"github.com/xenolf/lego/acme"
-	"github.com/xenolf/lego/providers/dns"
 )
 
 const ACME_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -66,6 +67,12 @@ func main() {
 					EnvVar: flagSetHelperEnvKey("PROVIDER"),
 				},
 				cli.StringFlag{
+					Name:   "preferred-chain",
+					Value:  "",
+					Usage:  "If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used.",
+					EnvVar: flagSetHelperEnvKey("PREFERRED-CHAIN"),
+				},
+				cli.StringFlag{
 					Name:   "dns.listen",
 					Value:  ":53",
 					Usage:  "Bind on this port to run the DNS server on (tcp and udp)",
@@ -111,7 +118,7 @@ func main() {
 					log.Fatal(err)
 				}
 
-				var dnsprovider acme.ChallengeProvider
+				var dnsprovider challenge.Provider
 				if challengeProvider == provider.Name {
 					// use built in dns server for cname redirect
 
@@ -124,7 +131,7 @@ func main() {
 					}
 				}
 
-				certStore, err = certstore.NewCertStore(c.String("server"), email, &dnsprovider, storage)
+				certStore, err = certstore.NewCertStore(c.String("server"), email, dnsprovider, storage, c.String("preferred-chain"))
 				if err != nil {
 					log.Fatal(err)
 				}
