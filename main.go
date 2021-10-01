@@ -70,7 +70,7 @@ func main() {
 					Name:   "preferred-chain",
 					Value:  "",
 					Usage:  "If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used.",
-					EnvVar: flagSetHelperEnvKey("PREFERRED-CHAIN"),
+					EnvVar: flagSetHelperEnvKey("PREFERRED_CHAIN"),
 				},
 				cli.StringFlag{
 					Name:   "dns.listen",
