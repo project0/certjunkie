@@ -67,6 +67,12 @@ func main() {
 					EnvVar: flagSetHelperEnvKey("PROVIDER"),
 				},
 				cli.StringFlag{
+					Name:   "preferred-chain",
+					Value:  "",
+					Usage:  "If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used.",
+					EnvVar: flagSetHelperEnvKey("PREFERRED-CHAIN"),
+				},
+				cli.StringFlag{
 					Name:   "dns.listen",
 					Value:  ":53",
 					Usage:  "Bind on this port to run the DNS server on (tcp and udp)",
@@ -125,7 +131,7 @@ func main() {
 					}
 				}
 
-				certStore, err = certstore.NewCertStore(c.String("server"), email, dnsprovider, storage)
+				certStore, err = certstore.NewCertStore(c.String("server"), email, dnsprovider, storage, c.String("preferred-chain"))
 				if err != nil {
 					log.Fatal(err)
 				}

@@ -40,19 +40,21 @@ func (u User) GetPrivateKey() crypto.PrivateKey {
 }
 
 type CertStore struct {
-	user    *User
-	email   string
-	client  *lego.Client
-	sync    *sync.Mutex
-	storage store.Store
+	user           *User
+	email          string
+	preferredChain string
+	client         *lego.Client
+	sync           *sync.Mutex
+	storage        store.Store
 }
 
-func NewCertStore(acmeDirectory string, email string, challengeProvider challenge.Provider, storage store.Store) (*CertStore, error) {
+func NewCertStore(acmeDirectory string, email string, challengeProvider challenge.Provider, storage store.Store, preferredChain string) (*CertStore, error) {
 	var err error
 	cs := &CertStore{
-		sync:    &sync.Mutex{},
-		email:   email,
-		storage: storage,
+		sync:           &sync.Mutex{},
+		email:          email,
+		storage:        storage,
+		preferredChain: preferredChain,
 	}
 
 	// ensure we have a user
@@ -159,10 +161,11 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 	}
 
 	req := certificate.ObtainRequest{
-		Domains:    request.domains(),
-		Bundle:     false,
-		PrivateKey: nil,
-		MustStaple: false,
+		Domains:        request.domains(),
+		Bundle:         false,
+		PrivateKey:     nil,
+		MustStaple:     false,
+		PreferredChain: c.preferredChain,
 	}
 	acmeCerts, err := c.client.Certificate.Obtain(req)
 	if err != nil {
