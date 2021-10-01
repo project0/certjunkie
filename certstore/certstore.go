@@ -10,20 +10,24 @@ import (
 	"sync"
 
 	"github.com/docker/libkv/store"
-	"github.com/xenolf/lego/acme"
+	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v4/lego"
+	"github.com/go-acme/lego/v4/registration"
 )
 
 type User struct {
-	Email        string                     `json:"email"`
-	Registration *acme.RegistrationResource `json:"registration"`
-	Key          []byte                     `json:"key"`
+	Email        string                 `json:"email"`
+	Registration *registration.Resource `json:"registration"`
+	Key          []byte                 `json:"key"`
 }
 
 func (u User) GetEmail() string {
 	return u.Email
 }
 
-func (u User) GetRegistration() *acme.RegistrationResource {
+func (u User) GetRegistration() *registration.Resource {
 	return u.Registration
 }
 
@@ -38,12 +42,12 @@ func (u User) GetPrivateKey() crypto.PrivateKey {
 type CertStore struct {
 	user    *User
 	email   string
-	client  *acme.Client
+	client  *lego.Client
 	sync    *sync.Mutex
 	storage store.Store
 }
 
-func NewCertStore(acmeDirectory string, email string, challengeProvider *acme.ChallengeProvider, storage store.Store) (*CertStore, error) {
+func NewCertStore(acmeDirectory string, email string, challengeProvider challenge.Provider, storage store.Store) (*CertStore, error) {
 	var err error
 	cs := &CertStore{
 		sync:    &sync.Mutex{},
@@ -61,14 +65,18 @@ func NewCertStore(acmeDirectory string, email string, challengeProvider *acme.Ch
 	if err != nil {
 		return nil, err
 	}
-	cs.client, err = acme.NewClient(acmeDirectory, cs.user, acme.RSA4096)
+
+	config := lego.NewConfig(cs.user)
+	config.CADirURL = acmeDirectory
+	config.Certificate.KeyType = certcrypto.RSA4096
+
+	cs.client, err = lego.NewClient(config)
 	if err != nil {
 		return nil, err
 	}
-	// set our own dns provider
-	cs.client.SetChallengeProvider(acme.DNS01, *challengeProvider)
 	// we support only dns challenges
-	cs.client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSALPN01})
+	// set our own dns provider
+	cs.client.Challenge.SetDNS01Provider(challengeProvider)
 
 	return cs, nil
 }
@@ -95,7 +103,7 @@ func (c *CertStore) GetUser() (*User, error) {
 	return user, err
 }
 
-func (c *CertStore) SaveUser(user *User) error {
+func (c *CertStore) SaveUser(user registration.User) error {
 	jsonContent, err := json.Marshal(user)
 	if err != nil {
 		return err
@@ -137,18 +145,26 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 	// check user first....
 	if c.user.Registration == nil {
 		log.Println("New Registration of user", c.client)
-		reg, err := c.client.Register(true)
+		reg, err := c.client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 		if err != nil {
-			log.Print(err)
+			log.Println(err)
+			return nil, err
 		}
 		// save this
 		c.user.Registration = reg
 		if err := c.SaveUser(c.user); err != nil {
 			log.Printf("could not save user registration %v", err)
+			return nil, err
 		}
 	}
 
-	acmeCerts, err := c.client.ObtainCertificate(request.domains(), false, nil, false)
+	req := certificate.ObtainRequest{
+		Domains:    request.domains(),
+		Bundle:     false,
+		PrivateKey: nil,
+		MustStaple: false,
+	}
+	acmeCerts, err := c.client.Certificate.Obtain(req)
 	if err != nil {
 		return nil, err
 	}

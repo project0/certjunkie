@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/miekg/dns"
-	"github.com/xenolf/lego/acme"
 )
 
 const Name = "dnscname"
@@ -24,7 +25,7 @@ type DnsCnameProviderAcme struct {
 }
 
 // NewDNSCnameChallengeProvider creates an dns server and returns an challenge provider for the acme library
-func NewDNSCnameChallengeProvider(zone string, nsdomain string, listen string) acme.ChallengeProvider {
+func NewDNSCnameChallengeProvider(zone string, nsdomain string, listen string) challenge.Provider {
 	provider := &DnsCnameProviderAcme{
 		Zone:     zone,
 		Nsdomain: nsdomain,
@@ -41,11 +42,11 @@ func NewDNSCnameChallengeProvider(zone string, nsdomain string, listen string) a
 func (d *DnsCnameProviderAcme) Present(domain, token, keyAuth string) error {
 	getChallengeLock(domain).Lock()
 	// ignore domain, we have a cname on it
-	_, value, ttl := acme.DNS01Record(domain, keyAuth)
+	_, value := dns01.GetRecord(domain, keyAuth)
 
 	cd := d.getChallengeDomainName(domain)
 	rr := new(dns.TXT)
-	rr.Hdr = dns.RR_Header{Name: cd, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: uint32(ttl)}
+	rr.Hdr = dns.RR_Header{Name: cd, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: uint32(1)}
 	rr.Txt = []string{value}
 
 	ChallengeRecord[cd] = rr
