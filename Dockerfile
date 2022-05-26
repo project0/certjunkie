@@ -3,7 +3,7 @@ FROM golang:1.18 as builder
 WORKDIR /go/src/github.com/project0/certjunkie/
 
 COPY . .
-RUN go get -v
+RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-w' -o certjunkie .
 
