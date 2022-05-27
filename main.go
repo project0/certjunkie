@@ -12,12 +12,11 @@ import (
 	"github.com/docker/libkv/store"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/providers/dns"
-
 	"github.com/project0/certjunkie/api"
 	"github.com/project0/certjunkie/certstore"
 	"github.com/project0/certjunkie/certstore/libkv/local"
 	"github.com/project0/certjunkie/provider"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 const ACME_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -27,80 +26,82 @@ const envPrefix = "CJ"
 
 var certStore *certstore.CertStore
 
-func flagSetHelperEnvKey(name string) string {
+func flagSetHelperEnvKey(name string) []string {
 	envKey := strings.ToUpper(name)
 	envKey = strings.Replace(envKey, "-", "_", -1)
-	return envPrefix + "_" + envKey
+	return []string{envPrefix + "_" + envKey}
 }
 
 func main() {
 
 	app := cli.NewApp()
 	app.HideVersion = true
+	app.Usage = "issue certificate with ACME as a REST"
 
-	app.Commands = []cli.Command{
+	app.Commands = []*cli.Command{
 		{
-			Name:        "server",
-			Description: "run DNS and API server",
+			Name:  "server",
+			Usage: "run DNS and API server",
+
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   "server",
-					Value:  ACME,
-					Usage:  "ACME Directory Resource URI",
-					EnvVar: flagSetHelperEnvKey("SERVER"),
+				&cli.StringFlag{
+					Name:    "server",
+					Value:   ACME,
+					Usage:   "ACME Directory Resource URI",
+					EnvVars: flagSetHelperEnvKey("SERVER"),
 				},
-				cli.StringFlag{
-					Name:   "email",
-					Usage:  "Registration email for the ACME server",
-					EnvVar: flagSetHelperEnvKey("EMAIL"),
+				&cli.StringFlag{
+					Name:    "email",
+					Usage:   "Registration email for the ACME server",
+					EnvVars: flagSetHelperEnvKey("EMAIL"),
 				},
-				cli.StringFlag{
-					Name:   "listen",
-					Value:  ":80",
-					Usage:  "Bind listener address for http (api) server",
-					EnvVar: flagSetHelperEnvKey("LISTEN"),
+				&cli.StringFlag{
+					Name:    "listen",
+					Value:   ":80",
+					Usage:   "Bind listener address for http (api) server",
+					EnvVars: flagSetHelperEnvKey("LISTEN"),
 				},
-				cli.StringFlag{
-					Name:   "provider",
-					Value:  provider.Name,
-					Usage:  "DNS challenge provider name",
-					EnvVar: flagSetHelperEnvKey("PROVIDER"),
+				&cli.StringFlag{
+					Name:    "provider",
+					Value:   provider.Name,
+					Usage:   "DNS challenge provider name",
+					EnvVars: flagSetHelperEnvKey("PROVIDER"),
 				},
-				cli.StringFlag{
-					Name:   "preferred-chain",
-					Value:  "",
-					Usage:  "If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used.",
-					EnvVar: flagSetHelperEnvKey("PREFERRED_CHAIN"),
+				&cli.StringFlag{
+					Name:    "preferred-chain",
+					Value:   "",
+					Usage:   "If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name. If no match, the default offered chain will be used.",
+					EnvVars: flagSetHelperEnvKey("PREFERRED_CHAIN"),
 				},
-				cli.StringFlag{
-					Name:   "dns.listen",
-					Value:  ":53",
-					Usage:  "Bind on this port to run the DNS server on (tcp and udp)",
-					EnvVar: flagSetHelperEnvKey("DNS_LISTEN"),
+				&cli.StringFlag{
+					Name:    "dns.listen",
+					Value:   ":53",
+					Usage:   "Bind on this port to run the DNS server on (tcp and udp)",
+					EnvVars: flagSetHelperEnvKey("DNS_LISTEN"),
 				},
-				cli.StringFlag{
-					Name:   "dns.domain",
-					Value:  "ns.local",
-					Usage:  "The NS domain name of this server",
-					EnvVar: flagSetHelperEnvKey("DNS_DOMAIN"),
+				&cli.StringFlag{
+					Name:    "dns.domain",
+					Value:   "ns.local",
+					Usage:   "The NS domain name of this server",
+					EnvVars: flagSetHelperEnvKey("DNS_DOMAIN"),
 				},
-				cli.StringFlag{
-					Name:   "dns.zone",
-					Value:  "acme.local",
-					Usage:  "The zone we are using to provide the txt records for challenge",
-					EnvVar: flagSetHelperEnvKey("DNS_ZONE"),
+				&cli.StringFlag{
+					Name:    "dns.zone",
+					Value:   "acme.local",
+					Usage:   "The zone we are using to provide the txt records for challenge",
+					EnvVars: flagSetHelperEnvKey("DNS_ZONE"),
 				},
-				cli.StringFlag{
-					Name:   "storage",
-					Value:  "local",
-					Usage:  "Storage driver to use, currently only local is supported",
-					EnvVar: flagSetHelperEnvKey("STORAGE"),
+				&cli.StringFlag{
+					Name:    "storage",
+					Value:   "local",
+					Usage:   "Storage driver to use, currently only local is supported",
+					EnvVars: flagSetHelperEnvKey("STORAGE"),
 				},
-				cli.StringFlag{
-					Name:   "storage.path",
-					Value:  os.Getenv("HOME") + "/.certjunkie",
-					Usage:  "Path to store the certs and account data for local storage driver",
-					EnvVar: flagSetHelperEnvKey("STORAGE_PATH"),
+				&cli.StringFlag{
+					Name:    "storage.path",
+					Value:   os.Getenv("HOME") + "/.certjunkie",
+					Usage:   "Path to store the certs and account data for local storage driver",
+					EnvVars: flagSetHelperEnvKey("STORAGE_PATH"),
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -149,51 +150,51 @@ func main() {
 			Name:        "client",
 			Description: "client to retrieve cert bundle from an certjunkie api",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:   "address",
-					Value:  "http://localhost:80",
-					Usage:  "CertJunkie api address",
-					EnvVar: flagSetHelperEnvKey("CLIENT_ADDRESS"),
+				&cli.StringFlag{
+					Name:    "address",
+					Value:   "http://localhost:80",
+					Usage:   "CertJunkie api address",
+					EnvVars: flagSetHelperEnvKey("CLIENT_ADDRESS"),
 				},
-				cli.StringFlag{
-					Name:   "domain",
-					Usage:  "Domain (common name) to obtain cert for, wildcard is allowed to use here",
-					EnvVar: flagSetHelperEnvKey("CLIENT_DOMAIN"),
+				&cli.StringFlag{
+					Name:    "domain",
+					Usage:   "Domain (common name) to obtain cert for, wildcard is allowed to use here",
+					EnvVars: flagSetHelperEnvKey("CLIENT_DOMAIN"),
 				},
-				cli.BoolFlag{
-					Name:   "onlycn",
-					Usage:  "Retrieve only certs where the common name is matching the domain",
-					EnvVar: flagSetHelperEnvKey("CLIENT_ONLYCN"),
+				&cli.BoolFlag{
+					Name:    "onlycn",
+					Usage:   "Retrieve only certs where the common name is matching the domain",
+					EnvVars: flagSetHelperEnvKey("CLIENT_ONLYCN"),
 				},
-				cli.StringSliceFlag{
-					Name:   "san",
-					Usage:  "Additonal subject alternative names (domains) the cert must have",
-					EnvVar: flagSetHelperEnvKey("CLIENT_SAN"),
+				&cli.StringSliceFlag{
+					Name:    "san",
+					Usage:   "Additonal subject alternative names (domains) the cert must have",
+					EnvVars: flagSetHelperEnvKey("CLIENT_SAN"),
 				},
-				cli.IntFlag{
-					Name:   "valid",
-					Usage:  " How long needs the cert to be valid in days before requesting a new on",
-					EnvVar: flagSetHelperEnvKey("CLIENT_VALID"),
+				&cli.IntFlag{
+					Name:    "valid",
+					Usage:   " How long needs the cert to be valid in days before requesting a new on",
+					EnvVars: flagSetHelperEnvKey("CLIENT_VALID"),
 				},
-				cli.StringFlag{
-					Name:   "file.cert",
-					Usage:  "Write certificate to file",
-					EnvVar: flagSetHelperEnvKey("CLIENT_FILE_CERT"),
+				&cli.StringFlag{
+					Name:    "file.cert",
+					Usage:   "Write certificate to file",
+					EnvVars: flagSetHelperEnvKey("CLIENT_FILE_CERT"),
 				},
-				cli.StringFlag{
-					Name:   "file.ca",
-					Usage:  "Write ca issuer to file",
-					EnvVar: flagSetHelperEnvKey("CLIENT_FILE_CA"),
+				&cli.StringFlag{
+					Name:    "file.ca",
+					Usage:   "Write ca issuer to file",
+					EnvVars: flagSetHelperEnvKey("CLIENT_FILE_CA"),
 				},
-				cli.StringFlag{
-					Name:   "file.key",
-					Usage:  "Write private key to file",
-					EnvVar: flagSetHelperEnvKey("CLIENT_FILE_KEY"),
+				&cli.StringFlag{
+					Name:    "file.key",
+					Usage:   "Write private key to file",
+					EnvVars: flagSetHelperEnvKey("CLIENT_FILE_KEY"),
 				},
-				cli.StringFlag{
-					Name:   "file.bundle",
-					Usage:  "Write bundle (cert+ca) to file",
-					EnvVar: flagSetHelperEnvKey("CLIENT_FILE_BUNDLE"),
+				&cli.StringFlag{
+					Name:    "file.bundle",
+					Usage:   "Write bundle (cert+ca) to file",
+					EnvVars: flagSetHelperEnvKey("CLIENT_FILE_BUNDLE"),
 				},
 			},
 			Action: func(c *cli.Context) error {
@@ -245,7 +246,6 @@ func main() {
 			},
 		},
 	}
-
 	app.RunAndExitOnError()
 
 }

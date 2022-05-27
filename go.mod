@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/miekg/dns v1.1.49
 	github.com/stretchr/testify v1.7.1
-	github.com/urfave/cli v1.22.9
+	github.com/urfave/cli/v2 v2.8.1
 )
 
 require (
@@ -101,6 +101,7 @@ require (
 	github.com/transip/gotransip/v6 v6.17.0 // indirect
 	github.com/vinyldns/go-vinyldns v0.9.16 // indirect
 	github.com/vultr/govultr/v2 v2.17.0 // indirect
+	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
