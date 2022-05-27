@@ -6,8 +6,9 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
-	"log"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/docker/libkv/store"
 	"github.com/go-acme/lego/v4/certcrypto"
@@ -34,7 +35,7 @@ func (u User) GetRegistration() *registration.Resource {
 func (u User) GetPrivateKey() crypto.PrivateKey {
 	key, err := x509.ParsePKCS1PrivateKey(u.Key)
 	if err != nil {
-		log.Fatal("Could not decode stored user private key")
+		log.Err(err).Msg("Cannot decode stored user private key")
 	}
 	return key
 }
@@ -146,16 +147,16 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 
 	// check user first....
 	if c.user.Registration == nil {
-		log.Println("New Registration of user", c.client)
+		log.Info().Msg("register new user")
 		reg, err := c.client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Msg("registration failed")
 			return nil, err
 		}
 		// save this
 		c.user.Registration = reg
 		if err := c.SaveUser(c.user); err != nil {
-			log.Printf("could not save user registration %v", err)
+			log.Err(err).Msg("could not save user registration")
 			return nil, err
 		}
 	}
@@ -184,7 +185,7 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 	val, _ := json.Marshal(cert)
 	err = c.storage.Put(request.pathCert(), val, nil)
 	if err != nil {
-		log.Printf("could not save cert for %s to storage %v", request.Domain, err)
+		log.Err(err).Str("domain", request.Domain).Msg("cannot save certificate in storage")
 	}
 
 	return cert, nil

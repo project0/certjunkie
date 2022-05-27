@@ -1,9 +1,10 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"os"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -28,7 +29,7 @@ func NewApiServer(listen string, store *certstore.CertStore) {
 	go func() {
 		err := http.ListenAndServe(listen, handlers.LoggingHandler(os.Stdout, r))
 		if err != nil {
-			log.Fatalf("Failed to setup the http server: %s\n", err.Error())
+			log.Fatal().Err(err).Msg("Failed to setup the http server")
 		}
 	}()
 }

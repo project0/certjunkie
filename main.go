@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"errors"
 	"os"
 	"os/signal"
 	"strings"
@@ -16,6 +15,9 @@ import (
 	"github.com/project0/certjunkie/certstore"
 	"github.com/project0/certjunkie/certstore/libkv/local"
 	"github.com/project0/certjunkie/provider"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
 	"github.com/urfave/cli/v2"
 )
 
@@ -37,6 +39,36 @@ func main() {
 	app := cli.NewApp()
 	app.HideVersion = true
 	app.Usage = "issue certificate with ACME as a REST"
+
+	app.Flags = []cli.Flag{
+		&cli.BoolFlag{
+			Name:     "log.debug",
+			Category: "log",
+			Usage:    "Enable debug logs",
+			EnvVars:  flagSetHelperEnvKey("LOG_DEBUG"),
+		},
+		&cli.StringFlag{
+			Name:     "log.format",
+			Category: "log",
+			Usage:    "Log format (console,json)",
+			Value:    "console",
+			EnvVars:  flagSetHelperEnvKey("LOG_FORMAT"),
+		},
+	}
+	app.Before = func(ctx *cli.Context) error {
+		// Default level for this example is info, unless debug flag is present
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		if ctx.Bool("log.debug") {
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		}
+
+		// output format
+		if ctx.String("log.format") == "console" {
+			log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		}
+
+		return nil
+	}
 
 	app.Commands = []*cli.Command{
 		{
@@ -108,7 +140,8 @@ func main() {
 				email := c.String("email")
 				challengeProvider := c.String("provider")
 				if email == "" {
-					return fmt.Errorf("Email is not set")
+					log.Error().Str("email", email).Msg("you need to provide a valid email address")
+					return errors.New("cannot initialize server")
 				}
 
 				local.Register()
@@ -116,25 +149,28 @@ func main() {
 					Bucket: c.String("storage.path"),
 				})
 				if err != nil {
-					log.Fatal(err)
+					log.Err(err).Msg("failed to initialize storage")
+					return errors.New("cannot initialize server")
 				}
 
 				var dnsprovider challenge.Provider
 				if challengeProvider == provider.Name {
 					// use built in dns server for cname redirect
-
 					dnsprovider = provider.NewDNSCnameChallengeProvider(c.String("dns.zone"), c.String("dns.domain"), c.String("dns.listen"))
 				} else {
 					// one of the shipped lego providers
 					dnsprovider, err = dns.NewDNSChallengeProviderByName(challengeProvider)
 					if err != nil {
-						log.Fatal(err)
+						log.Err(err).Msg("failed to initialize DNS challenge provider")
+						return errors.New("cannot initialize server")
+
 					}
 				}
 
 				certStore, err = certstore.NewCertStore(c.String("server"), email, dnsprovider, storage, c.String("preferred-chain"))
 				if err != nil {
-					log.Fatal(err)
+					log.Err(err).Msg("failed to initialize certificate storage")
+					return errors.New("cannot initialize server")
 				}
 
 				api.NewApiServer(c.String("listen"), certStore)
@@ -200,7 +236,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 				domain := c.String("domain")
 				if domain == "" {
-					return fmt.Errorf("Domain is not set")
+					return errors.New("domain is not set")
 				}
 
 				client := &api.Client{
@@ -246,6 +282,8 @@ func main() {
 			},
 		},
 	}
-	app.RunAndExitOnError()
 
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal().Err(err).Msg("execution failed")
+	}
 }

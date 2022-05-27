@@ -2,10 +2,11 @@ package provider
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -33,6 +34,7 @@ func NewDNSCnameChallengeProvider(zone string, nsdomain string, listen string) c
 	// start the internal dns server
 	dns.HandleFunc(zone+".", provider.handleDnsRequests)
 	log.Printf("Start listening DNS server on %s", listen)
+	// TODO: Handle properly with signal shutdowns
 	go serveDns("tcp", listen)
 	go serveDns("udp", listen)
 	return provider
@@ -147,6 +149,6 @@ func (d *DnsCnameProviderAcme) handleDnsRequests(w dns.ResponseWriter, r *dns.Ms
 func serveDns(net string, listen string) {
 	server := &dns.Server{Addr: listen, Net: net, TsigSecret: nil}
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Failed to setup the %s server: %s\n", net, err.Error())
+		log.Fatal().Err(err).Msgf("Failed to setup the %s server", net)
 	}
 }

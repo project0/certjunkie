@@ -1,9 +1,10 @@
 package certstore
 
 import (
-	"log"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // CertRequest contains information about the requested cert
