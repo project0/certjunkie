@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	stdlog "log"
 	"os"
 	"os/signal"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/go-acme/lego/v4/challenge"
+	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/project0/certjunkie/api"
 	"github.com/project0/certjunkie/certstore"
@@ -66,6 +68,13 @@ func main() {
 		if ctx.String("log.format") == "console" {
 			log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 		}
+
+		// overwrite lego logger
+		legolog.Logger = stdlog.New(
+			log.With().Str("component", "lego").Logger(),
+			"",
+			0,
+		)
 
 		return nil
 	}
@@ -166,6 +175,9 @@ func main() {
 
 					}
 				}
+				log.Debug().
+					Str("provider", challengeProvider).
+					Msg("initialize certificate store")
 
 				certStore, err = certstore.NewCertStore(c.String("server"), email, dnsprovider, storage, c.String("preferred-chain"))
 				if err != nil {
@@ -243,6 +255,12 @@ func main() {
 					Address: c.String("address"),
 				}
 
+				log.Info().
+					Str("domain", domain).
+					Strs("san", c.StringSlice("san")).
+					Bool("onlycn", c.Bool("onlycn")).
+					Int("valid", c.Int("valid")).
+					Msg("request certificate")
 				cert, err := client.Get(domain, c.StringSlice("san"), c.Bool("onlycn"), c.Int("valid"))
 				if err != nil {
 					return err
