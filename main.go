@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	stdlog "log"
 	"os"
 	"os/signal"
@@ -23,10 +24,17 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const ACME_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
-const ACME = "https://acme-v02.api.letsencrypt.org/directory"
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
-const envPrefix = "CJ"
+const (
+	ACME_STAGING = "https://acme-staging-v02.api.letsencrypt.org/directory"
+	ACME         = "https://acme-v02.api.letsencrypt.org/directory"
+	envPrefix    = "CJ"
+)
 
 var certStore *certstore.CertStore
 
@@ -39,7 +47,7 @@ func flagSetHelperEnvKey(name string) []string {
 func main() {
 
 	app := cli.NewApp()
-	app.HideVersion = true
+	app.Version = fmt.Sprintf("%s %s %s", version, commit, date)
 	app.Usage = "issue certificate with ACME as a REST"
 
 	app.Flags = []cli.Flag{

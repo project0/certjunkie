@@ -1,0 +1,86 @@
+before:
+  hooks:
+    - go mod download
+env:
+  - CGO_ENABLED=0
+  - GOPROXY=https://proxy.golang.org
+project_name: certjunkie
+
+builds:
+  - id: builds
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+    main: main.go
+
+dockers:
+  - image_templates:
+      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-amd64"
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--platform=linux/amd64"
+
+  - image_templates:
+      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-arm64"
+      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-arm64"
+    use: buildx
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--platform=linux/arm64"
+
+docker_manifests:
+  # docker hub
+  - name_template: "{{ .Env.DOCKER_HUB_REPO }}:latest"
+    image_templates:
+      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-arm64"
+  - name_template: "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}"
+    image_templates:
+      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-arm64"
+
+  # github container
+  - name_template: "{{ .Env.DOCKER_GITHUB_REPO }}:latest"
+    image_templates:
+      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-arm64"
+  - name_template: "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}"
+    image_templates:
+      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-amd64"
+      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-arm64"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^chore'
+    - Merge pull request
+    - Merge remote-tracking branch
+    - Merge branch
+    - go mod tidy
+  groups:
+    - title: 'New Features'
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 10
+    - title: Other work
+      order: 999
+release:
+  # If you want to manually examine the release before its live, uncomment this line:
+  # draft: true
+  footer: |
+    **Full Changelog**: https://github.com/project0/certjunkie/compare/{{ .PreviousTag }}...{{ .Tag }}

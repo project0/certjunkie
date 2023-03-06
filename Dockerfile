@@ -12,8 +12,8 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
-COPY --from=builder /go/src/github.com/project0/certjunkie/certjunkie .
+COPY --from=builder /go/src/github.com/project0/certjunkie/certjunkie /certjunkie
 
-ENTRYPOINT ["./certjunkie"]
+ENTRYPOINT ["/certjunkie"]
 
 CMD [ "server" ]

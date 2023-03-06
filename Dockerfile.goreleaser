@@ -1,0 +1,11 @@
+FROM golang:1.20-alpine as builder
+
+FROM scratch
+
+WORKDIR /root/
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+
+COPY certjunkie /certjunkie
+ENTRYPOINT ["/certjunkie"]
+
+CMD [ "server" ]
