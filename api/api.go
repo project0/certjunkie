@@ -24,7 +24,7 @@ func NewApiServer(listen string, store *certstore.CertStore) {
 	r.HandleFunc("/cert/{domain}/key", apiCert.getKey).Methods(http.MethodGet)
 	r.HandleFunc("/cert/{domain}/bundle", apiCert.getBundle).Methods(http.MethodGet)
 
-	log.Info().Msgf("Start listening http server on %s", listen)
+	log.Info().Str("addr", listen).Msg("Start http server")
 	go func() {
 		err := http.ListenAndServe(listen, handlers.LoggingHandler(log.With().Str("component", "api_requests").Logger(), r))
 		if err != nil {

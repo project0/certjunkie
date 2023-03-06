@@ -51,7 +51,7 @@ func (c *Client) Get(domain string, san []string, onlyCN bool, valid int) (cert 
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Failed to retrieve cert: %s", string(respBody))
+		return nil, fmt.Errorf("failed to retrieve cert: %s", string(respBody))
 	}
 
 	cert = &certstore.CertificateResource{}
@@ -69,7 +69,7 @@ func (c *Client) WriteBundle(cert *certstore.CertificateResource, filepath strin
 	return c.writeFile(append(cert.GetNoBundleCertificate(), cert.IssuerCertificate...), filepath)
 }
 
-// WriteKey writes the privte key to file
+// WriteKey writes the private key to file
 func (c *Client) WriteKey(cert *certstore.CertificateResource, filepath string) (err error) {
 	return c.writeFile(cert.PrivateKey, filepath)
 }

@@ -21,7 +21,7 @@ func (a *apiCert) certRequest(w http.ResponseWriter, r *http.Request) *certstore
 	var err error
 	vars := mux.Vars(r)
 	if vars["domain"] == "" {
-		http.Error(w, fmt.Sprintf("Domain name %s is not valid", vars["domain"]), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Domain name %q is not valid", vars["domain"]), http.StatusBadRequest)
 		return nil
 	}
 	query := r.URL.Query()

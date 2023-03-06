@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -170,7 +171,7 @@ func (c *CertStore) GetCertificate(request *CertRequest) (*CertificateResource, 
 	}
 	acmeCerts, err := c.client.Certificate.Obtain(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to obtain new certificate: %v", err)
 	}
 
 	// create our own cert resource
@@ -217,13 +218,13 @@ func (c *CertStore) findStoredCert(r *CertRequest) (*CertificateResource, error)
 	for _, pair := range list {
 		cert := new(CertificateResource)
 		if err := json.Unmarshal(pair.Value, cert); err != nil {
-			log.Printf("Could not decode json from %s", pair.Key)
+			log.Err(err).Str("cert_key", pair.Key).Msg("Could not decode json from store")
 			continue
 		}
 
 		ok, err := r.matchCertificate(cert)
 		if err != nil {
-			log.Print(err)
+			log.Err(err).Msg("Unable to find check matched certificate")
 			continue
 		}
 		if ok {
