@@ -1,4 +1,4 @@
-FROM golang:1.20 as builder
+FROM golang:1.25 AS builder
 
 WORKDIR /go/src/github.com/project0/certjunkie/
 

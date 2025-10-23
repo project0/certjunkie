@@ -4,22 +4,16 @@ name: Tests
 # This GitHub action runs your tests for each pull request and push.
 # Optionally, you can turn it on using a schedule for regular testing.
 on:
-  pull_request:
-    paths-ignore:
-      - 'README.md'
+#  pull_request:
+#    paths-ignore:
+#      - "README.md"
   push:
     paths-ignore:
-      - 'README.md'
+      - "README.md"
 
 # Testing only needs permissions to read the repository contents.
 permissions:
   contents: read
-
-# Default values to simplify job configurations below.
-env:
-  # Go language version to use for building. This value should also be updated
-  # in the release workflow if changed.
-  GO_VERSION: '1.20'
 
 jobs:
   # Build and test
@@ -28,29 +22,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/cache@v3
+      - name: setup-go
+        uses: actions/setup-go@v4
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - if: steps.cache.outputs.cache-hit != 'true'
+          go-version-file: "go.mod"
+          cache-dependency-path: "go.sum"
+
+      - if: steps.setup-go.outputs.cache-hit != 'true'
         run: go mod download
 
       - run: go build -v .
       - run: go test -v -cover ./...
-
 
   # test goreleaser build
   goreleaser-snapshot:
@@ -60,35 +47,29 @@ jobs:
       - test
     timeout-minutes: 10
     steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/cache@v3
+      - name: setup-go
+        uses: actions/setup-go@v4
         with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - if: steps.cache.outputs.cache-hit != 'true'
+          go-version-file: "go.mod"
+          cache-dependency-path: "go.sum"
+
+      - if: steps.setup-go.outputs.cache-hit != 'true'
         run: go mod download
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: goreleaser
-        uses: goreleaser/goreleaser-action@v4
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --snapshot --clean
