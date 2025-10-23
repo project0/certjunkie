@@ -80,9 +80,7 @@ func NewCertStore(acmeDirectory string, email string, challengeProvider challeng
 	}
 	// we support only dns challenges
 	// set our own dns provider
-	cs.client.Challenge.SetDNS01Provider(challengeProvider)
-
-	return cs, nil
+	return cs, cs.client.Challenge.SetDNS01Provider(challengeProvider)
 }
 
 func (c *CertStore) GetUser() (*User, error) {
@@ -103,7 +101,7 @@ func (c *CertStore) GetUser() (*User, error) {
 	}
 
 	user := &User{}
-	json.Unmarshal(fileUser.Value, user)
+	err = json.Unmarshal(fileUser.Value, user)
 	return user, err
 }
 

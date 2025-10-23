@@ -40,7 +40,7 @@ var certStore *certstore.CertStore
 
 func flagSetHelperEnvKey(name string) []string {
 	envKey := strings.ToUpper(name)
-	envKey = strings.Replace(envKey, "-", "_", -1)
+	envKey = strings.ReplaceAll(envKey, "-", "_")
 	return []string{envPrefix + "_" + envKey}
 }
 

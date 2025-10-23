@@ -3,9 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -50,7 +51,7 @@ func (c *Client) Get(domain string, san []string, onlyCN bool, valid int) (cert 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		respBody, _ := ioutil.ReadAll(resp.Body)
+		respBody, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("failed to retrieve cert: %s", string(respBody))
 	}
 
@@ -80,5 +81,5 @@ func (c *Client) WriteCA(cert *certstore.CertificateResource, filepath string) (
 }
 
 func (c *Client) writeFile(data []byte, filepath string) error {
-	return ioutil.WriteFile(filepath, data, 0644)
+	return os.WriteFile(filepath, data, 0644)
 }

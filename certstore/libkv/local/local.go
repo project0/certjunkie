@@ -1,7 +1,6 @@
 package local
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -57,7 +56,7 @@ func (l *Local) Put(key string, value []byte, opts *store.WriteOptions) error {
 	if err := l.checkPath(filepath.Dir(path)); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, value, 0600)
+	return os.WriteFile(path, value, 0600)
 
 }
 
@@ -73,7 +72,7 @@ func (l *Local) Get(key string) (*store.KVPair, error) {
 		return nil, store.ErrKeyNotFound
 	}
 	path := l.absolutePath(key)
-	value, err := ioutil.ReadFile(path)
+	value, err := os.ReadFile(path)
 
 	return &store.KVPair{Key: key, Value: value, LastIndex: 0}, err
 }
@@ -114,12 +113,12 @@ func (l *Local) List(prefix string) ([]*store.KVPair, error) {
 			return nil
 		}
 
-		pair, err := l.Get(strings.TrimPrefix(path, l.Options.Bucket))
-		if err == nil {
+		pair, getErr := l.Get(strings.TrimPrefix(path, l.Options.Bucket))
+		if getErr == nil {
 			kv = append(kv, pair)
 		}
 
-		return err
+		return getErr
 	})
 
 	return kv, err
@@ -127,7 +126,6 @@ func (l *Local) List(prefix string) ([]*store.KVPair, error) {
 
 // Close is not required but needs to be implemented
 func (l *Local) Close() {
-	return
 }
 
 // DeleteTree remove

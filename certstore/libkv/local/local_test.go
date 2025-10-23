@@ -1,7 +1,6 @@
 package local
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -42,7 +41,7 @@ func TestRegister(t *testing.T) {
 }
 
 func TestLocalStore(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "kvlocaltest")
+	tmpdir, err := os.MkdirTemp("", "kvlocaltest")
 
 	if err != nil {
 		t.Fatalf("cannot create temp dir: %v", err)
