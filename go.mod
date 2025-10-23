@@ -1,6 +1,6 @@
 module github.com/project0/certjunkie
 
-go 1.20
+go 1.25
 
 require (
 	github.com/docker/libkv v0.2.1

@@ -16,44 +16,24 @@ builds:
 
     main: main.go
 
-dockers:
-  - image_templates:
-      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-amd64"
-    use: buildx
-    dockerfile: Dockerfile.goreleaser
-    build_flag_templates:
-      - "--platform=linux/amd64"
-
-  - image_templates:
-      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-arm64"
-      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-arm64"
-    use: buildx
-    goarch: arm64
-    dockerfile: Dockerfile.goreleaser
-    build_flag_templates:
-      - "--platform=linux/arm64"
-
-docker_manifests:
-  # docker hub
-  - name_template: "{{ .Env.DOCKER_HUB_REPO }}:latest"
-    image_templates:
-      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-arm64"
-  - name_template: "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}"
-    image_templates:
-      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.DOCKER_HUB_REPO }}:{{ .Version }}-arm64"
-
-  # github container
-  - name_template: "{{ .Env.DOCKER_GITHUB_REPO }}:latest"
-    image_templates:
-      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-arm64"
-  - name_template: "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}"
-    image_templates:
-      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.DOCKER_GITHUB_REPO }}:{{ .Version }}-arm64"
+dockers_v2:
+  - dockerfile: Dockerfile.goreleaser
+    images:
+      - "{{ .Env.DOCKER_HUB_REPO }}"
+      - "{{ .Env.DOCKER_GITHUB_REPO }}"
+    tags:
+      - "{{ .Version }}"
+      - "latest"
+    labels:
+      "org.opencontainers.image.description": "CertJunkie"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
 
 checksum:
   name_template: "checksums.txt"
